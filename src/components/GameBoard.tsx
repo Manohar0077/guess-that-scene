@@ -1,7 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import RevealCanvas from "./RevealCanvas";
+import ChatBox, { ChatMessage } from "./ChatBox";
+import Scoreboard from "./Scoreboard";
 import { Eye, Trophy, RotateCcw, ArrowRight } from "lucide-react";
+import { PhotoEntry } from "@/data/photoLibrary";
 
 interface Player {
   name: string;
@@ -15,65 +18,101 @@ interface Circle {
 }
 
 interface GameBoardProps {
-  imageSrc: string;
+  photos: PhotoEntry[];
   playerNames: string[];
   onPlayAgain: () => void;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({
-  imageSrc,
-  playerNames,
-  onPlayAgain,
-}) => {
+const GameBoard: React.FC<GameBoardProps> = ({ photos, playerNames, onPlayAgain }) => {
   const [players, setPlayers] = useState<Player[]>(
     playerNames.map((name) => ({ name, score: 0 }))
   );
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [circles, setCircles] = useState<Circle[]>([]);
-  const [round, setRound] = useState(1);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [roundWinner, setRoundWinner] = useState<string | null>(null);
   const [gameOver, setGameOver] = useState(false);
-  const maxRounds = 7;
+  const [roundStartTime, setRoundStartTime] = useState(Date.now());
+  const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const currentPhoto = photos[currentPhotoIndex];
+  const totalRounds = photos.length;
 
   const generateRandomCircle = useCallback((): Circle => {
     return {
-      x: 0.15 + Math.random() * 0.7,
-      y: 0.15 + Math.random() * 0.7,
-      radius: 0.06 + Math.random() * 0.04,
+      x: 0.12 + Math.random() * 0.76,
+      y: 0.12 + Math.random() * 0.76,
+      radius: 0.03 + Math.random() * 0.025,
     };
   }, []);
 
-  const revealNext = () => {
-    if (gameOver) return;
-    const newCircle = generateRandomCircle();
-    setCircles((prev) => [...prev, newCircle]);
+  // Auto-reveal circles every 3 seconds
+  useEffect(() => {
+    if (roundWinner || gameOver) {
+      if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
+      return;
+    }
+
+    if (circles.length > 0) {
+      revealIntervalRef.current = setInterval(() => {
+        setCircles((prev) => [...prev, generateRandomCircle()]);
+      }, 3000);
+    }
+
+    return () => {
+      if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
+    };
+  }, [roundWinner, gameOver, circles.length, generateRandomCircle]);
+
+  const startRevealing = () => {
+    if (circles.length === 0) {
+      setCircles([generateRandomCircle()]);
+      setRoundStartTime(Date.now());
+    }
   };
 
-  const handleGuess = (playerName: string) => {
-    setRoundWinner(playerName);
-    setPlayers((prev) =>
-      prev.map((p) =>
-        p.name === playerName ? { ...p, score: p.score + Math.max(1, maxRounds - round + 1) } : p
-      )
-    );
+  const handleSendMessage = (playerName: string, text: string) => {
+    const msg: ChatMessage = {
+      id: `${Date.now()}-${Math.random()}`,
+      playerName,
+      text,
+      timestamp: Date.now(),
+      isCorrect: false,
+    };
+
+    // Check if guess is correct (case-insensitive, trimmed)
+    const guess = text.trim().toLowerCase();
+    const answer = currentPhoto.answer.trim().toLowerCase();
+
+    if (guess === answer && !roundWinner) {
+      msg.isCorrect = true;
+      setRoundWinner(playerName);
+
+      // Score based on time: faster = more points
+      const elapsed = (Date.now() - roundStartTime) / 1000;
+      const timeBonus = Math.max(1, Math.round(20 - elapsed));
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.name === playerName ? { ...p, score: p.score + timeBonus } : p
+        )
+      );
+    }
+
+    setMessages((prev) => [...prev, msg]);
   };
 
   const nextRound = () => {
-    if (round >= maxRounds) {
+    const nextIndex = currentPhotoIndex + 1;
+    if (nextIndex >= totalRounds) {
       setGameOver(true);
       return;
     }
-    setRound((r) => r + 1);
+    setCurrentPhotoIndex(nextIndex);
+    setCircles([]);
     setRoundWinner(null);
-    revealNext();
+    setMessages([]);
   };
 
-  const startFirstReveal = () => {
-    if (circles.length === 0) {
-      revealNext();
-    }
-  };
-
-  // Sort players by score for leaderboard
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
   if (gameOver) {
@@ -82,18 +121,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="game-card max-w-md w-full text-center animate-scale-in">
           <Trophy className="w-16 h-16 text-secondary mx-auto mb-4" />
-          <h2 className="text-3xl font-display font-bold text-foreground mb-2">
-            Game Over!
-          </h2>
+          <h2 className="text-3xl font-display font-bold text-foreground mb-2">Game Over!</h2>
           <p className="text-xl text-primary font-display font-semibold mb-6">
             🎉 {winner.name} wins with {winner.score} points!
           </p>
-          
-          {/* Final image reveal */}
-          <div className="mb-6">
-            <img src={imageSrc} alt="The answer" className="w-full rounded-xl" />
-          </div>
-
           <div className="space-y-2 mb-6">
             {sortedPlayers.map((p, i) => (
               <div
@@ -109,7 +140,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
               </div>
             ))}
           </div>
-
           <Button onClick={onPlayAgain} className="w-full" size="lg">
             <RotateCcw className="w-4 h-4 mr-2" /> Play Again
           </Button>
@@ -119,94 +149,90 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between w-full max-w-3xl animate-fade-in">
-        <div>
-          <h2 className="text-2xl font-display font-bold text-foreground">
-            Round {round}/{maxRounds}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {circles.length} area{circles.length !== 1 ? "s" : ""} revealed
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {sortedPlayers.map((p) => (
-            <div
-              key={p.name}
-              className="text-center px-3 py-1 rounded-lg bg-muted"
-            >
-              <div className="text-xs text-muted-foreground">{p.name}</div>
-              <div className="text-sm font-bold text-foreground">{p.score}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Canvas */}
-      <div className="game-card p-4 animate-fade-in">
-        {circles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center" style={{ width: 500, height: 400 }}>
-            <Eye className="w-16 h-16 text-muted-foreground mb-4 animate-pulse-glow" />
-            <p className="text-muted-foreground mb-4 font-display text-lg">
-              Ready to start revealing?
+    <div className="min-h-screen flex flex-col lg:flex-row p-4 gap-4">
+      {/* Left: Game area */}
+      <div className="flex-1 flex flex-col items-center gap-4">
+        {/* Header */}
+        <div className="flex items-center justify-between w-full max-w-xl animate-fade-in">
+          <div>
+            <h2 className="text-2xl font-display font-bold text-foreground">
+              Round {currentPhotoIndex + 1}/{totalRounds}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {circles.length} area{circles.length !== 1 ? "s" : ""} revealed
             </p>
-            <Button onClick={startFirstReveal} size="lg">
-              <Eye className="w-4 h-4 mr-2" /> Reveal First Area
-            </Button>
           </div>
-        ) : (
-          <RevealCanvas
-            imageSrc={imageSrc}
-            revealedCircles={circles}
-            width={500}
-            height={400}
-          />
-        )}
-      </div>
+        </div>
 
-      {/* Controls */}
-      {circles.length > 0 && (
-        <div className="w-full max-w-3xl animate-fade-in">
-          {roundWinner ? (
-            <div className="game-card text-center">
-              <p className="text-lg font-display font-semibold text-success mb-3">
-                🎉 {roundWinner} guessed correctly! +{Math.max(1, maxRounds - round + 1)} points
+        {/* Canvas */}
+        <div className="game-card p-4 animate-fade-in">
+          {circles.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center"
+              style={{ width: 500, height: 400 }}
+            >
+              <Eye className="w-16 h-16 text-muted-foreground mb-4 animate-pulse-glow" />
+              <p className="text-muted-foreground mb-4 font-display text-lg">
+                Ready to start revealing?
               </p>
-              <Button onClick={nextRound} size="lg">
-                {round >= maxRounds ? (
-                  <>Finish Game <Trophy className="w-4 h-4 ml-2" /></>
-                ) : (
-                  <>Next Round <ArrowRight className="w-4 h-4 ml-2" /></>
-                )}
+              <Button onClick={startRevealing} size="lg">
+                <Eye className="w-4 h-4 mr-2" /> Start Round
               </Button>
             </div>
           ) : (
-            <div className="game-card">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-muted-foreground font-medium">
-                  Who guessed it first?
-                </p>
-                <Button onClick={revealNext} variant="outline" size="sm">
-                  <Eye className="w-4 h-4 mr-1" /> Reveal More
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {players.map((p) => (
-                  <Button
-                    key={p.name}
-                    onClick={() => handleGuess(p.name)}
-                    variant="outline"
-                    className="text-base hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    {p.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <RevealCanvas
+              imageSrc={currentPhoto.src}
+              revealedCircles={circles}
+              width={500}
+              height={400}
+            />
           )}
         </div>
-      )}
+
+        {/* Round winner banner */}
+        {roundWinner && (
+          <div className="game-card text-center w-full max-w-xl animate-bounce-in">
+            <p className="text-lg font-display font-semibold mb-2" style={{ color: "hsl(var(--game-success))" }}>
+              🎉 {roundWinner} guessed it! The answer was "{currentPhoto.answer}"
+            </p>
+            <img
+              src={currentPhoto.src}
+              alt={currentPhoto.answer}
+              className="w-32 h-24 object-cover rounded-lg mx-auto mb-3"
+            />
+            <Button onClick={nextRound} size="lg">
+              {currentPhotoIndex + 1 >= totalRounds ? (
+                <>Finish Game <Trophy className="w-4 h-4 ml-2" /></>
+              ) : (
+                <>Next Round <ArrowRight className="w-4 h-4 ml-2" /></>
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Right: Sidebar with scoreboard + chat */}
+      <div className="w-full lg:w-80 flex flex-col gap-4">
+        {/* Scoreboard */}
+        <div className="game-card">
+          <Scoreboard players={players} roundWinner={roundWinner} />
+        </div>
+
+        {/* Chat */}
+        <div className="game-card flex-1 flex flex-col min-h-[300px]">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Guesses
+          </h3>
+          <div className="flex-1 flex flex-col min-h-0">
+            <ChatBox
+              messages={messages}
+              players={playerNames}
+              onSendMessage={handleSendMessage}
+              disabled={!!roundWinner}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
