@@ -1,29 +1,30 @@
-import React, { useState } from "react";
-import GameSetup from "@/components/GameSetup";
-import GameBoard from "@/components/GameBoard";
-import { getRandomPhotos, PhotoEntry } from "@/data/photoLibrary";
+import React, { useState, useCallback } from "react";
+import RoomLobby from "@/components/RoomLobby";
+import OnlineGameBoard from "@/components/OnlineGameBoard";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 const Index = () => {
   const [gameState, setGameState] = useState<{
-    photos: PhotoEntry[];
-    players: string[];
+    ws: ReturnType<typeof useWebSocket>;
+    playerName: string;
   } | null>(null);
 
+  const handleGameStart = useCallback((ws: ReturnType<typeof useWebSocket>, playerName: string) => {
+    setGameState({ ws, playerName });
+  }, []);
+
   if (!gameState) {
-    return (
-      <GameSetup
-        onStartGame={(players, roundCount) =>
-          setGameState({ photos: getRandomPhotos(roundCount), players })
-        }
-      />
-    );
+    return <RoomLobby onGameStart={handleGameStart} />;
   }
 
   return (
-    <GameBoard
-      photos={gameState.photos}
-      playerNames={gameState.players}
-      onPlayAgain={() => setGameState(null)}
+    <OnlineGameBoard
+      ws={gameState.ws}
+      playerName={gameState.playerName}
+      onPlayAgain={() => {
+        gameState.ws.disconnect();
+        setGameState(null);
+      }}
     />
   );
 };

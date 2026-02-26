@@ -1,0 +1,12 @@
+{
+  "name": "guess-who-server",
+  "version": "1.0.0",
+  "description": "WebSocket game server for Guess Who",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
