@@ -12,7 +12,7 @@ interface RoomLobbyProps {
 
 const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
   const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
-  const [serverUrl, setServerUrl] = useState("ws://localhost:3001");
+  const serverUrl = "ws://localhost:3001"; // Replace with your server URL
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [rounds, setRounds] = useState(5);
@@ -147,17 +147,6 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
             <Sparkles className="w-8 h-8 text-secondary" />
           </div>
           <p className="text-muted-foreground">Online multiplayer photo guessing game</p>
-        </div>
-
-        {/* Server URL */}
-        <div className="mb-5">
-          <label className="block text-sm font-semibold text-foreground mb-1.5">Server URL</label>
-          <Input
-            value={serverUrl}
-            onChange={(e) => setServerUrl(e.target.value)}
-            placeholder="ws://localhost:3001"
-            className="bg-muted border-border font-mono text-sm"
-          />
         </div>
 
         {/* Player name */}
