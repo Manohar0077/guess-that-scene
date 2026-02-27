@@ -3,17 +3,18 @@ const fs = require("fs");
 const path = require("path");
 
 const PORT = process.env.PORT || 3001;
-const PHOTOS_DIR = path.join(__dirname, "..", "public", "photos");
+// const PHOTOS_DIR = path.join(__dirname, "..", "public", "photos");
+const PHOTOS_DIR = path.join(process.cwd(), "public", "photos");
 const ROUND_DURATION_SECONDS = 60;
 const REVEAL_INTERVAL_MS = 3000;
 
 // Scan photos folder: filename (without extension) = answer
 function loadPhotos() {
-  if (!fs.existsSync(PHOTOS_DIR)) {
-    fs.mkdirSync(PHOTOS_DIR, { recursive: true });
-    console.log(`Created photos directory: ${PHOTOS_DIR}`);
-    return [];
-  }
+  // if (!fs.existsSync(PHOTOS_DIR)) {
+  //   fs.mkdirSync(PHOTOS_DIR, { recursive: true });
+  //   console.log(`Created photos directory: ${PHOTOS_DIR}`);
+  //   return [];
+  // }
   const exts = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
   return fs
     .readdirSync(PHOTOS_DIR)
