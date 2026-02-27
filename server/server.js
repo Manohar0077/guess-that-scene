@@ -4,6 +4,8 @@ const path = require("path");
 
 const PORT = process.env.PORT || 3001;
 const PHOTOS_DIR = path.join(__dirname, "..", "public", "photos");
+const ROUND_DURATION_SECONDS = 60;
+const REVEAL_INTERVAL_MS = 3000;
 
 // Scan photos folder: filename (without extension) = answer
 function loadPhotos() {
@@ -60,22 +62,64 @@ function generateCircle() {
   };
 }
 
+function clearRoomTimers(room) {
+  if (room.revealInterval) {
+    clearInterval(room.revealInterval);
+    room.revealInterval = null;
+  }
+  if (room.roundTimerInterval) {
+    clearInterval(room.roundTimerInterval);
+    room.roundTimerInterval = null;
+  }
+  if (room.roundTimeout) {
+    clearTimeout(room.roundTimeout);
+    room.roundTimeout = null;
+  }
+}
+
 function startRound(room) {
+  clearRoomTimers(room);
+
   room.circles = [generateCircle()];
   room.roundWinner = null;
   room.roundStartTime = Date.now();
+  room.roundEndsAt = room.roundStartTime + ROUND_DURATION_SECONDS * 1000;
   room.messages = [];
 
-  // Auto-reveal interval
-  if (room.revealInterval) clearInterval(room.revealInterval);
   room.revealInterval = setInterval(() => {
-    if (room.roundWinner) {
-      clearInterval(room.revealInterval);
+    if (room.roundWinner || room.state !== "playing") {
       return;
     }
     room.circles.push(generateCircle());
     broadcast(room, { type: "circles", circles: room.circles });
-  }, 3000);
+  }, REVEAL_INTERVAL_MS);
+
+  room.roundTimerInterval = setInterval(() => {
+    if (room.roundWinner || room.state !== "playing") {
+      return;
+    }
+    const timeLeft = Math.max(0, Math.ceil((room.roundEndsAt - Date.now()) / 1000));
+    broadcast(room, { type: "round_time", timeLeft });
+  }, 1000);
+
+  room.roundTimeout = setTimeout(() => {
+    if (room.roundWinner || room.state !== "playing") return;
+
+    const answer = room.photos[room.currentRound].answer;
+    room.roundWinner = "__timeout__";
+    clearRoomTimers(room);
+
+    broadcast(room, {
+      type: "round_timeout",
+      answer,
+      photoSrc: room.photos[room.currentRound].src,
+      scoreboard: getScoreboard(room),
+    });
+
+    setTimeout(() => {
+      if (room.state === "playing") nextRound(room);
+    }, 2000);
+  }, ROUND_DURATION_SECONDS * 1000);
 
   broadcast(room, {
     type: "round_start",
@@ -84,13 +128,15 @@ function startRound(room) {
     photoSrc: room.photos[room.currentRound].src,
     circles: room.circles,
     scoreboard: getScoreboard(room),
+    timeLeft: ROUND_DURATION_SECONDS,
   });
 }
 
 function nextRound(room) {
+  clearRoomTimers(room);
+
   room.currentRound++;
   if (room.currentRound >= room.totalRounds) {
-    if (room.revealInterval) clearInterval(room.revealInterval);
     broadcast(room, {
       type: "game_over",
       scoreboard: getScoreboard(room),
@@ -137,7 +183,10 @@ wss.on("connection", (ws) => {
           messages: [],
           roundWinner: null,
           roundStartTime: 0,
+          roundEndsAt: 0,
           revealInterval: null,
+          roundTimerInterval: null,
+          roundTimeout: null,
         };
         rooms.set(code, room);
         playerRoom = room;
@@ -199,7 +248,9 @@ wss.on("connection", (ws) => {
         if (text.toLowerCase() === answer) {
           chatMsg.isCorrect = true;
           playerRoom.roundWinner = playerName;
-          if (playerRoom.revealInterval) clearInterval(playerRoom.revealInterval);
+          if (playerRoom.revealInterval || playerRoom.roundTimerInterval || playerRoom.roundTimeout) {
+            clearRoomTimers(playerRoom);
+          }
 
           const elapsed = (Date.now() - playerRoom.roundStartTime) / 1000;
           const points = Math.max(1, Math.round(20 - elapsed));
@@ -232,7 +283,7 @@ wss.on("connection", (ws) => {
     if (playerRoom) {
       playerRoom.players = playerRoom.players.filter((p) => p.ws !== ws);
       if (playerRoom.players.length === 0) {
-        if (playerRoom.revealInterval) clearInterval(playerRoom.revealInterval);
+        clearRoomTimers(playerRoom);
         rooms.delete(playerRoom.code);
       } else {
         broadcast(playerRoom, {

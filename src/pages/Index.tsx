@@ -4,27 +4,27 @@ import OnlineGameBoard from "@/components/OnlineGameBoard";
 import { useWebSocket, WSMessage } from "@/hooks/useWebSocket";
 
 const Index = () => {
+  const ws = useWebSocket();
   const [gameState, setGameState] = useState<{
-    ws: ReturnType<typeof useWebSocket>;
     playerName: string;
     initialRoundData?: WSMessage;
   } | null>(null);
 
-  const handleGameStart = useCallback((ws: ReturnType<typeof useWebSocket>, playerName: string, initialRoundData?: WSMessage) => {
-    setGameState({ ws, playerName, initialRoundData });
+  const handleGameStart = useCallback((playerName: string, initialRoundData?: WSMessage) => {
+    setGameState({ playerName, initialRoundData });
   }, []);
 
   if (!gameState) {
-    return <RoomLobby onGameStart={handleGameStart} />;
+    return <RoomLobby ws={ws} onGameStart={handleGameStart} />;
   }
 
   return (
     <OnlineGameBoard
-      ws={gameState.ws}
+      ws={ws}
       playerName={gameState.playerName}
       initialRoundData={gameState.initialRoundData}
       onPlayAgain={() => {
-        gameState.ws.disconnect();
+        ws.disconnect();
         setGameState(null);
       }}
     />
