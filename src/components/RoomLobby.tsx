@@ -2,14 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Copy, Users, Play, LogIn, Plus } from "lucide-react";
-import { useWebSocket, WSMessage } from "@/hooks/useWebSocket";
+import { WSMessage, useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 
 interface RoomLobbyProps {
-  onGameStart: (ws: ReturnType<typeof useWebSocket>, playerName: string, initialRoundData?: WSMessage) => void;
+  ws: ReturnType<typeof useWebSocket>;
+  onGameStart: (playerName: string, initialRoundData?: WSMessage) => void;
 }
 
-const RoomLobby: React.FC<RoomLobbyProps> = ({ onGameStart }) => {
+const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
   const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
   const [serverUrl, setServerUrl] = useState("ws://localhost:3001");
   const [playerName, setPlayerName] = useState("");
@@ -20,8 +21,6 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ onGameStart }) => {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(false);
-
-  const ws = useWebSocket();
 
   const handleMessages = useCallback(
     (msg: WSMessage) => {
@@ -37,7 +36,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ onGameStart }) => {
           setLobbyPlayers(msg.players);
           break;
         case "round_start":
-          onGameStart(ws, playerName, msg);
+          onGameStart(playerName, msg);
           break;
         case "error":
           setError(msg.message);

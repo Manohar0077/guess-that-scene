@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import RevealCanvas from "./RevealCanvas";
 import Scoreboard from "./Scoreboard";
-import { Trophy, RotateCcw, ArrowRight } from "lucide-react";
+import { Trophy, RotateCcw, Clock } from "lucide-react";
 import { useWebSocket, WSMessage } from "@/hooks/useWebSocket";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
   const [scoreboard, setScoreboard] = useState<PlayerScore[]>([]);
   const [roundIndex, setRoundIndex] = useState(0);
   const [totalRounds, setTotalRounds] = useState(0);
+  const [roundTimeLeft, setRoundTimeLeft] = useState(60);
   const [roundWinner, setRoundWinner] = useState<string | null>(null);
   const [winnerAnswer, setWinnerAnswer] = useState("");
   const [winnerPhotoSrc, setWinnerPhotoSrc] = useState("");
@@ -51,6 +52,7 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setCircles(msg.circles);
     setRoundIndex(msg.roundIndex);
     setTotalRounds(msg.totalRounds);
+    setRoundTimeLeft(msg.timeLeft ?? 60);
     setScoreboard(msg.scoreboard);
     setRoundWinner(null);
     setWinnerAnswer("");
@@ -77,6 +79,17 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setGameOver(true);
   }, []);
 
+  const handleRoundTime = useCallback((msg: WSMessage) => {
+    setRoundTimeLeft(msg.timeLeft ?? 0);
+  }, []);
+
+  const handleRoundTimeout = useCallback((msg: WSMessage) => {
+    setRoundWinner("Time's up");
+    setWinnerAnswer(msg.answer);
+    setWinnerPhotoSrc(msg.photoSrc);
+    setScoreboard(msg.scoreboard);
+  }, []);
+
   // Apply initial round data that was received before this component mounted
   useEffect(() => {
     if (initialRoundData) {
@@ -90,10 +103,12 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
       ws.on("circles", handleCircles),
       ws.on("chat", handleChat),
       ws.on("round_won", handleRoundWon),
+      ws.on("round_time", handleRoundTime),
+      ws.on("round_timeout", handleRoundTimeout),
       ws.on("game_over", handleGameOver),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleGameOver]);
+  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleRoundTime, handleRoundTimeout, handleGameOver]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -146,8 +161,9 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
             <h2 className="text-2xl font-display font-bold text-foreground">
               Round {roundIndex + 1}/{totalRounds}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {circles.length} area{circles.length !== 1 ? "s" : ""} revealed • Playing as <span className="text-primary font-semibold">{playerName}</span>
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {roundTimeLeft}s left • {circles.length} area{circles.length !== 1 ? "s" : ""} revealed • Playing as <span className="text-primary font-semibold">{playerName}</span>
             </p>
           </div>
         </div>
@@ -170,7 +186,9 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
         {roundWinner && (
           <div className="game-card text-center w-full max-w-xl animate-bounce-in">
             <p className="text-lg font-display font-semibold mb-2" style={{ color: "hsl(var(--game-success))" }}>
-              🎉 {roundWinner} guessed it! The answer was "{winnerAnswer}"
+              {roundWinner === "Time's up"
+                ? `⏱️ Time's up! The answer was "${winnerAnswer}"`
+                : `🎉 ${roundWinner} guessed it! The answer was "${winnerAnswer}"`}
             </p>
             {winnerPhotoSrc && (
               <img
