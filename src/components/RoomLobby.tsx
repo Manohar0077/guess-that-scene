@@ -12,7 +12,7 @@ interface RoomLobbyProps {
 
 const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
   const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
-  const serverUrl = "ws://localhost:3001"; // Replace with your server URL
+  const serverUrl = "https://guess-that-scene.onrender.com"; // Replace with your server URL
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [rounds, setRounds] = useState(5);
