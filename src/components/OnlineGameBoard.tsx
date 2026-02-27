@@ -24,10 +24,11 @@ interface PlayerScore {
 interface OnlineGameBoardProps {
   ws: ReturnType<typeof useWebSocket>;
   playerName: string;
+  initialRoundData?: WSMessage;
   onPlayAgain: () => void;
 }
 
-const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, onPlayAgain }) => {
+const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initialRoundData, onPlayAgain }) => {
   const [photoSrc, setPhotoSrc] = useState("");
   const [circles, setCircles] = useState<{ x: number; y: number; radius: number }[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -75,6 +76,13 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, onPla
     setScoreboard(msg.scoreboard);
     setGameOver(true);
   }, []);
+
+  // Apply initial round data that was received before this component mounted
+  useEffect(() => {
+    if (initialRoundData) {
+      handleRoundStart(initialRoundData);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const unsubs = [

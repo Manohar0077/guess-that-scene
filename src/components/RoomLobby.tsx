@@ -6,7 +6,7 @@ import { useWebSocket, WSMessage } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 
 interface RoomLobbyProps {
-  onGameStart: (ws: ReturnType<typeof useWebSocket>, playerName: string) => void;
+  onGameStart: (ws: ReturnType<typeof useWebSocket>, playerName: string, initialRoundData?: WSMessage) => void;
 }
 
 const RoomLobby: React.FC<RoomLobbyProps> = ({ onGameStart }) => {
@@ -37,7 +37,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ onGameStart }) => {
           setLobbyPlayers(msg.players);
           break;
         case "round_start":
-          onGameStart(ws, playerName);
+          onGameStart(ws, playerName, msg);
           break;
         case "error":
           setError(msg.message);
