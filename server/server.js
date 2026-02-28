@@ -59,7 +59,7 @@ function generateCircle() {
   return {
     x: 0.1 + Math.random() * 0.8,
     y: 0.1 + Math.random() * 0.8,
-    radius: 0.06 + Math.random() * 0.04,
+    radius: 0.12,
   };
 }
 
@@ -82,7 +82,7 @@ function startRound(room) {
   clearRoomTimers(room);
 
   room.circles = room.revealMode === "bubbles" ? [generateCircle()] : [];
-  room.blurLevel = room.revealMode === "blur" ? 40 : 0;
+  room.blurLevel = room.revealMode === "blur" ? 50 : 0;
   room.roundWinner = null;
   room.roundStartTime = Date.now();
   room.roundEndsAt = room.roundStartTime + ROUND_DURATION_SECONDS * 1000;
