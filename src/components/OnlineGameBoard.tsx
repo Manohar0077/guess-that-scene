@@ -57,7 +57,7 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setRoundTimeLeft(msg.timeLeft ?? 60);
     setScoreboard(msg.scoreboard);
     setRevealMode(msg.revealMode || "bubbles");
-    setBlurLevel(msg.blurLevel ?? 40);
+    setBlurLevel(msg.blurLevel ?? 50);
     setRoundWinner(null);
     setWinnerAnswer("");
     setMessages([]);

@@ -43,9 +43,16 @@ const RevealCanvas: React.FC<RevealCanvasProps> = ({
 
     if (revealMode === "blur") {
       // Blur reveal: draw image with decreasing blur
+      // Draw with oversized bounds to prevent blur edge artifacts
+      const pad = blurLevel * 3;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, width, height);
+      ctx.clip();
       ctx.filter = blurLevel > 0 ? `blur(${blurLevel}px)` : "none";
-      ctx.drawImage(image, offsetX, offsetY, drawW, drawH);
+      ctx.drawImage(image, offsetX - pad, offsetY - pad, drawW + pad * 2, drawH + pad * 2);
       ctx.filter = "none";
+      ctx.restore();
     } else {
       // Bubble reveal: blurred background + circle cutouts
       ctx.filter = "blur(40px) brightness(0.3)";
