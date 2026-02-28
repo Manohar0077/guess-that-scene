@@ -183,6 +183,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ photos, playerNames, onPlayAgain 
             <RevealCanvas
               imageSrc={currentPhoto.src}
               revealedCircles={circles}
+              revealMode="bubbles"
+              blurLevel={0}
               width={500}
               height={400}
             />

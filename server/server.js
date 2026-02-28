@@ -57,9 +57,9 @@ function getScoreboard(room) {
 
 function generateCircle() {
   return {
-    x: 0.12 + Math.random() * 0.76,
-    y: 0.12 + Math.random() * 0.76,
-    radius: 0.025 + Math.random() * 0.02,
+    x: 0.1 + Math.random() * 0.8,
+    y: 0.1 + Math.random() * 0.8,
+    radius: 0.06 + Math.random() * 0.04,
   };
 }
 
@@ -81,7 +81,8 @@ function clearRoomTimers(room) {
 function startRound(room) {
   clearRoomTimers(room);
 
-  room.circles = [generateCircle()];
+  room.circles = room.revealMode === "bubbles" ? [generateCircle()] : [];
+  room.blurLevel = room.revealMode === "blur" ? 40 : 0;
   room.roundWinner = null;
   room.roundStartTime = Date.now();
   room.roundEndsAt = room.roundStartTime + ROUND_DURATION_SECONDS * 1000;
@@ -91,8 +92,13 @@ function startRound(room) {
     if (room.roundWinner || room.state !== "playing") {
       return;
     }
-    room.circles.push(generateCircle());
-    broadcast(room, { type: "circles", circles: room.circles });
+    if (room.revealMode === "blur") {
+      room.blurLevel = Math.max(0, room.blurLevel - 2);
+      broadcast(room, { type: "blur_update", blurLevel: room.blurLevel });
+    } else {
+      room.circles.push(generateCircle());
+      broadcast(room, { type: "circles", circles: room.circles });
+    }
   }, REVEAL_INTERVAL_MS);
 
   room.roundTimerInterval = setInterval(() => {
@@ -130,6 +136,8 @@ function startRound(room) {
     circles: room.circles,
     scoreboard: getScoreboard(room),
     timeLeft: ROUND_DURATION_SECONDS,
+    revealMode: room.revealMode || "bubbles",
+    blurLevel: room.blurLevel ?? 0,
   });
 }
 
@@ -176,6 +184,7 @@ wss.on("connection", (ws) => {
           code,
           host: msg.playerName,
           state: "lobby",
+          revealMode: msg.revealMode || "bubbles",
           players: [],
           photos: shuffle(photos).slice(0, roundCount),
           totalRounds: roundCount,

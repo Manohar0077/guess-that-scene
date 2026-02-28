@@ -31,6 +31,8 @@ interface OnlineGameBoardProps {
 const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initialRoundData, onPlayAgain }) => {
   const [photoSrc, setPhotoSrc] = useState("");
   const [circles, setCircles] = useState<{ x: number; y: number; radius: number }[]>([]);
+  const [revealMode, setRevealMode] = useState<"bubbles" | "blur">("bubbles");
+  const [blurLevel, setBlurLevel] = useState(40);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [scoreboard, setScoreboard] = useState<PlayerScore[]>([]);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -54,6 +56,8 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setTotalRounds(msg.totalRounds);
     setRoundTimeLeft(msg.timeLeft ?? 60);
     setScoreboard(msg.scoreboard);
+    setRevealMode(msg.revealMode || "bubbles");
+    setBlurLevel(msg.blurLevel ?? 40);
     setRoundWinner(null);
     setWinnerAnswer("");
     setMessages([]);
@@ -90,6 +94,10 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setScoreboard(msg.scoreboard);
   }, []);
 
+  const handleBlurUpdate = useCallback((msg: WSMessage) => {
+    setBlurLevel(msg.blurLevel ?? 0);
+  }, []);
+
   // Apply initial round data that was received before this component mounted
   useEffect(() => {
     if (initialRoundData) {
@@ -105,10 +113,11 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
       ws.on("round_won", handleRoundWon),
       ws.on("round_time", handleRoundTime),
       ws.on("round_timeout", handleRoundTimeout),
+      ws.on("blur_update", handleBlurUpdate),
       ws.on("game_over", handleGameOver),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleRoundTime, handleRoundTimeout, handleGameOver]);
+  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleRoundTime, handleRoundTimeout, handleBlurUpdate, handleGameOver]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -173,6 +182,8 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
             <RevealCanvas
               imageSrc={photoSrc}
               revealedCircles={circles}
+              revealMode={revealMode}
+              blurLevel={blurLevel}
               width={500}
               height={400}
             />
