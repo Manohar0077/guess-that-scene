@@ -16,6 +16,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [rounds, setRounds] = useState(5);
+  const [revealMode, setRevealMode] = useState<"bubbles" | "blur">("bubbles");
   const [lobbyPlayers, setLobbyPlayers] = useState<string[]>([]);
   const [isHost, setIsHost] = useState(false);
   const [createdCode, setCreatedCode] = useState("");
@@ -69,7 +70,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
     setConnecting(true);
     try {
       await ws.connect(serverUrl);
-      ws.send({ type: "create_room", playerName: playerName.trim(), rounds });
+      ws.send({ type: "create_room", playerName: playerName.trim(), rounds, revealMode });
     } catch {
       setError("Could not connect to server. Is it running?");
     }
@@ -189,6 +190,24 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
                     }`}
                   >
                     {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Reveal Style</label>
+              <div className="flex gap-2">
+                {([["bubbles", "🔵 Bubbles"], ["blur", "🌫️ Blur"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setRevealMode(val)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      revealMode === val
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {label}
                   </button>
                 ))}
               </div>
