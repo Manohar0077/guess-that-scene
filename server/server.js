@@ -41,6 +41,10 @@ function shuffle(arr) {
   return a;
 }
 
+function normalizeRevealMode(mode) {
+  return mode === "blur" ? "blur" : "bubbles";
+}
+
 // --- Room state ---
 const rooms = new Map();
 
@@ -136,7 +140,7 @@ function startRound(room) {
     circles: room.circles,
     scoreboard: getScoreboard(room),
     timeLeft: ROUND_DURATION_SECONDS,
-    revealMode: room.revealMode || "bubbles",
+    revealMode: room.revealMode,
     blurLevel: room.blurLevel ?? 0,
   });
 }
@@ -184,7 +188,7 @@ wss.on("connection", (ws) => {
           code,
           host: msg.playerName,
           state: "lobby",
-          revealMode: msg.revealMode || "bubbles",
+          revealMode: normalizeRevealMode(msg.revealMode),
           players: [],
           photos: shuffle(photos).slice(0, roundCount),
           totalRounds: roundCount,
