@@ -44,28 +44,33 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
   const [gameOver, setGameOver] = useState(false);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isServerBlurSync, setIsServerBlurSync] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleRoundStart = useCallback((msg: WSMessage) => {
+    const roundRevealMode: "bubbles" | "blur" = msg.revealMode === "blur" ? "blur" : "bubbles";
+
     setPhotoSrc(msg.photoSrc);
-    setCircles(msg.circles);
     setRoundIndex(msg.roundIndex);
     setTotalRounds(msg.totalRounds);
     setRoundTimeLeft(msg.timeLeft ?? 60);
     setScoreboard(msg.scoreboard);
-    setRevealMode(msg.revealMode || "bubbles");
-    setBlurLevel(msg.blurLevel ?? 50);
+    setRevealMode(roundRevealMode);
+    setBlurLevel(msg.blurLevel ?? (roundRevealMode === "blur" ? 50 : 0));
+    setCircles(roundRevealMode === "blur" ? [] : (msg.circles ?? []));
     setRoundWinner(null);
     setWinnerAnswer("");
     setMessages([]);
+    setIsServerBlurSync(false);
   }, []);
 
   const handleCircles = useCallback((msg: WSMessage) => {
-    setCircles(msg.circles);
-  }, []);
+    if (revealMode === "blur") return;
+    setCircles(msg.circles ?? []);
+  }, [revealMode]);
 
   const handleChat = useCallback((msg: WSMessage) => {
     setMessages((prev) => [...prev, msg.message]);
@@ -95,8 +100,19 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
   }, []);
 
   const handleBlurUpdate = useCallback((msg: WSMessage) => {
+    setIsServerBlurSync(true);
     setBlurLevel(msg.blurLevel ?? 0);
   }, []);
+
+  useEffect(() => {
+    if (revealMode !== "blur" || roundWinner || gameOver || isServerBlurSync) return;
+
+    const fallbackInterval = setInterval(() => {
+      setBlurLevel((prev) => Math.max(0, prev - 2));
+    }, 3000);
+
+    return () => clearInterval(fallbackInterval);
+  }, [revealMode, roundWinner, gameOver, roundIndex, isServerBlurSync]);
 
   // Apply initial round data that was received before this component mounted
   useEffect(() => {
