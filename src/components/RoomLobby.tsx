@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Copy, Users, Play, LogIn, Plus } from "lucide-react";
+import { Sparkles, Copy, Users, Play, LogIn, Plus, Share2 } from "lucide-react";
 import { WSMessage, useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 
 interface RoomLobbyProps {
   ws: ReturnType<typeof useWebSocket>;
   onGameStart: (playerName: string, initialRoundData?: WSMessage) => void;
+  initialRoomCode?: string;
 }
 
-const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
-  const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
+const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, setMode] = useState<"menu" | "create" | "join">(initialRoomCode ? "join" : "menu");
   const serverUrl = "https://guess-that-scene.onrender.com"; // Replace with your server URL
   const [playerName, setPlayerName] = useState("");
-  const [roomCode, setRoomCode] = useState("");
+  const [roomCode, setRoomCode] = useState(initialRoomCode || "");
   const [rounds, setRounds] = useState(5);
   const [revealMode, setRevealMode] = useState<"bubbles" | "blur">("bubbles");
   const [lobbyPlayers, setLobbyPlayers] = useState<string[]>([]);
@@ -29,9 +32,11 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
         case "room_created":
           setCreatedCode(msg.code);
           setIsHost(true);
+          setSearchParams({ room: msg.code });
           break;
         case "room_joined":
           setCreatedCode(msg.code);
+          setSearchParams({ room: msg.code });
           break;
         case "lobby":
           setLobbyPlayers(msg.players);
@@ -96,6 +101,12 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
     toast.success("Room code copied!");
   };
 
+  const shareLink = () => {
+    const url = `${window.location.origin}${window.location.pathname}?room=${createdCode}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Invite link copied!");
+  };
+
   // In lobby
   if (createdCode) {
     return (
@@ -109,8 +120,10 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart }) => {
               <Copy className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-muted-foreground text-sm mb-4">Share this code with other players</p>
-
+          <p className="text-muted-foreground text-sm mb-2">Share this code with other players</p>
+          <Button variant="outline" size="sm" onClick={shareLink} className="mb-4">
+            <Share2 className="w-4 h-4 mr-2" /> Copy Invite Link
+          </Button>
           <div className="space-y-2 mb-6">
             {lobbyPlayers.map((name, i) => (
               <div key={name} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted">

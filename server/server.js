@@ -284,6 +284,35 @@ wss.on("connection", (ws) => {
           setTimeout(() => {
             if (playerRoom.state === "playing") nextRound(playerRoom);
           }, 5000);
+        } else {
+          // Check for close match - if guess shares >= 60% of characters with answer
+          const guess = text.toLowerCase();
+          const maxLen = Math.max(guess.length, answer.length);
+          if (maxLen > 0) {
+            let matches = 0;
+            const answerChars = answer.split('');
+            const guessChars = guess.split('');
+            const used = new Array(answerChars.length).fill(false);
+            for (const gc of guessChars) {
+              const idx = answerChars.findIndex((ac, i) => !used[i] && ac === gc);
+              if (idx !== -1) { matches++; used[idx] = true; }
+            }
+            const similarity = matches / maxLen;
+            if (similarity >= 0.5 && guess.length >= 2) {
+              // Send private hint only to this player
+              const hintMsg = {
+                id: `hint-${Date.now()}-${Math.random()}`,
+                playerName: "System",
+                text: "🔥 You're close to the answer!",
+                timestamp: Date.now(),
+                isHint: true,
+              };
+              const p = playerRoom.players.find((p) => p.name === playerName);
+              if (p && p.ws.readyState === 1) {
+                p.ws.send(JSON.stringify({ type: "close_hint", message: hintMsg }));
+              }
+            }
+          }
         }
 
         playerRoom.messages.push(chatMsg);
