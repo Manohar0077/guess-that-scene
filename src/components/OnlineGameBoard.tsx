@@ -14,6 +14,7 @@ interface ChatMessage {
   text: string;
   timestamp: number;
   isCorrect?: boolean;
+  isHint?: boolean;
 }
 
 interface PlayerScore {
@@ -104,6 +105,10 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
     setBlurLevel(msg.blurLevel ?? 0);
   }, []);
 
+  const handleCloseHint = useCallback((msg: WSMessage) => {
+    setMessages((prev) => [...prev, msg.message]);
+  }, []);
+
   useEffect(() => {
     if (revealMode !== "blur" || roundWinner || gameOver || isServerBlurSync) return;
 
@@ -130,10 +135,11 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
       ws.on("round_time", handleRoundTime),
       ws.on("round_timeout", handleRoundTimeout),
       ws.on("blur_update", handleBlurUpdate),
+      ws.on("close_hint", handleCloseHint),
       ws.on("game_over", handleGameOver),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleRoundTime, handleRoundTimeout, handleBlurUpdate, handleGameOver]);
+  }, [ws, handleRoundStart, handleCircles, handleChat, handleRoundWon, handleRoundTime, handleRoundTimeout, handleBlurUpdate, handleCloseHint, handleGameOver]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -252,11 +258,17 @@ const OnlineGameBoard: React.FC<OnlineGameBoardProps> = ({ ws, playerName, initi
                   key={msg.id}
                   className={`flex items-start gap-2 text-sm ${msg.isCorrect ? "animate-bounce-in" : ""}`}
                 >
-                  <span className="font-semibold text-primary shrink-0">{msg.playerName}:</span>
-                  <span className={msg.isCorrect ? "font-bold" : "text-foreground"} style={msg.isCorrect ? { color: "hsl(var(--game-success))" } : undefined}>
-                    {msg.text}
-                    {msg.isCorrect && " ✅"}
-                  </span>
+                  {msg.isHint ? (
+                    <span className="text-destructive font-semibold italic">{msg.text}</span>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-primary shrink-0">{msg.playerName}:</span>
+                      <span className={msg.isCorrect ? "font-bold" : "text-foreground"} style={msg.isCorrect ? { color: "hsl(var(--game-success))" } : undefined}>
+                        {msg.text}
+                        {msg.isCorrect && " ✅"}
+                      </span>
+                    </>
+                  )}
                 </div>
               ))}
               <div ref={bottomRef} />
