@@ -20,6 +20,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
   const [roomCode, setRoomCode] = useState(initialRoomCode || "");
   const [rounds, setRounds] = useState(5);
   const [revealMode, setRevealMode] = useState<"bubbles" | "blur">("bubbles");
+  const [photoSource, setPhotoSource] = useState<"custom" | "online">("custom");
   const [lobbyPlayers, setLobbyPlayers] = useState<string[]>([]);
   const [isHost, setIsHost] = useState(false);
   const [createdCode, setCreatedCode] = useState("");
