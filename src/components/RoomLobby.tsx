@@ -191,6 +191,27 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
         {mode === "create" && (
           <div className="space-y-4">
             <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Photo Source</label>
+              <div className="flex gap-2">
+                {([["custom", "📁 Custom Photos"], ["online", "🌐 Celebrity Photos"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setPhotoSource(val)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      photoSource === val
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {photoSource === "custom" ? "Uses photos from your server's photos folder" : "Uses famous celebrity photos from the internet"}
+              </p>
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-foreground mb-2">Rounds</label>
               <div className="flex gap-2">
                 {[3, 5, 8, 10].map((n) => (
