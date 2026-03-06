@@ -8,21 +8,46 @@ const PHOTOS_DIR = path.join(process.cwd(), "public", "photos");
 const ROUND_DURATION_SECONDS = 60;
 const REVEAL_INTERVAL_MS = 3000;
 
+// Celebrity photos (online mode)
+const CELEBRITY_PHOTOS = [
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Virat_Kohli_during_the_India_vs_Aus_4th_Test_match_at_Narendra_Modi_Stadium_on_09_March_2023.jpg/440px-Virat_Kohli_during_the_India_vs_Aus_4th_Test_match_at_Narendra_Modi_Stadium_on_09_March_2023.jpg", answer: "virat kohli" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg/440px-Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg", answer: "lionel messi" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/440px-Cristiano_Ronaldo_2018.jpg", answer: "cristiano ronaldo" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Shah_Rukh_Khan_graces_the_launch_of_the_new_TAG_Heuer_collection_%28cropped%29.jpg/440px-Shah_Rukh_Khan_graces_the_launch_of_the_new_TAG_Heuer_collection_%28cropped%29.jpg", answer: "shah rukh khan" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ed_Sheeran_2013.jpg/440px-Ed_Sheeran_2013.jpg", answer: "ed sheeran" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Neymar_Jr_2022.jpg/440px-Neymar_Jr_2022.jpg", answer: "neymar" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/440px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg", answer: "albert einstein" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Elon_Musk_Royal_Society_%28crop2%29.jpg/440px-Elon_Musk_Royal_Society_%28crop2%29.jpg", answer: "elon musk" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Sachin_Tendulkar_at_MRF_Pace_Foundation.jpg/440px-Sachin_Tendulkar_at_MRF_Pace_Foundation.jpg", answer: "sachin tendulkar" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Ariana_Grande_Grammys_Red_Carpet_2020.png/440px-Ariana_Grande_Grammys_Red_Carpet_2020.png", answer: "ariana grande" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Dwayne_Johnson_2%2C_2013.jpg/440px-Dwayne_Johnson_2%2C_2013.jpg", answer: "dwayne johnson" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Bill_Gates_2018.jpg/440px-Bill_Gates_2018.jpg", answer: "bill gates" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/LeBron_James_-_51959723161_%28cropped%29.jpg/440px-LeBron_James_-_51959723161_%28cropped%29.jpg", answer: "lebron james" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Brad_Pitt_2019_by_Glenn_Francis.jpg/440px-Brad_Pitt_2019_by_Glenn_Francis.jpg", answer: "brad pitt" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/MSDhoni09.jpg/440px-MSDhoni09.jpg", answer: "ms dhoni" },
+];
+
 // Scan photos folder: filename (without extension) = answer
-function loadPhotos() {
-  // if (!fs.existsSync(PHOTOS_DIR)) {
-  //   fs.mkdirSync(PHOTOS_DIR, { recursive: true });
-  //   console.log(`Created photos directory: ${PHOTOS_DIR}`);
-  //   return [];
-  // }
+function loadCustomPhotos() {
   const exts = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-  return fs
-    .readdirSync(PHOTOS_DIR)
-    .filter((f) => exts.includes(path.extname(f).toLowerCase()))
-    .map((f) => ({
-      src: `/photos/${f}`,
-      answer: path.basename(f, path.extname(f)).toLowerCase(),
-    }));
+  try {
+    return fs
+      .readdirSync(PHOTOS_DIR)
+      .filter((f) => exts.includes(path.extname(f).toLowerCase()))
+      .map((f) => ({
+        src: `/photos/${f}`,
+        answer: path.basename(f, path.extname(f)).toLowerCase(),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function loadPhotos(photoSource) {
+  if (photoSource === "online") {
+    return [...CELEBRITY_PHOTOS];
+  }
+  return loadCustomPhotos();
 }
 
 function generateRoomCode() {
@@ -177,9 +202,10 @@ wss.on("connection", (ws) => {
 
     switch (msg.type) {
       case "create_room": {
-        const photos = loadPhotos();
+        const photoSource = msg.photoSource === "online" ? "online" : "custom";
+        const photos = loadPhotos(photoSource);
         if (photos.length === 0) {
-          ws.send(JSON.stringify({ type: "error", message: "No photos found in public/photos/ folder. Add images first!" }));
+          ws.send(JSON.stringify({ type: "error", message: photoSource === "custom" ? "No photos found in public/photos/ folder. Add images first!" : "No celebrity photos available." }));
           return;
         }
         const code = generateRoomCode();

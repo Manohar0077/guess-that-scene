@@ -20,6 +20,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
   const [roomCode, setRoomCode] = useState(initialRoomCode || "");
   const [rounds, setRounds] = useState(5);
   const [revealMode, setRevealMode] = useState<"bubbles" | "blur">("bubbles");
+  const [photoSource, setPhotoSource] = useState<"custom" | "online">("custom");
   const [lobbyPlayers, setLobbyPlayers] = useState<string[]>([]);
   const [isHost, setIsHost] = useState(false);
   const [createdCode, setCreatedCode] = useState("");
@@ -75,7 +76,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
     setConnecting(true);
     try {
       await ws.connect(serverUrl);
-      ws.send({ type: "create_room", playerName: playerName.trim(), rounds, revealMode });
+      ws.send({ type: "create_room", playerName: playerName.trim(), rounds, revealMode, photoSource });
     } catch {
       setError("Could not connect to server. Is it running?");
     }
@@ -189,6 +190,27 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
 
         {mode === "create" && (
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Photo Source</label>
+              <div className="flex gap-2">
+                {([["custom", "📁 Custom Photos"], ["online", "🌐 Celebrity Photos"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setPhotoSource(val)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      photoSource === val
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {photoSource === "custom" ? "Uses photos from your server's photos folder" : "Uses famous celebrity photos from the internet"}
+              </p>
+            </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">Rounds</label>
               <div className="flex gap-2">
