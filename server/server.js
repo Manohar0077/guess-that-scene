@@ -8,23 +8,23 @@ const PHOTOS_DIR = path.join(process.cwd(), "public", "photos");
 const ROUND_DURATION_SECONDS = 60;
 const REVEAL_INTERVAL_MS = 3000;
 
-// Celebrity photos (online mode) - using reliable image sources
+// Celebrity photos (online mode) - stable Wikimedia image URLs
 const CELEBRITY_PHOTOS = [
-  { src: "https://m.media-amazon.com/images/M/MV5BNjk2OTUxMzM0MF5BMl5BanBnXkFtZTcwMTc0MDUyMw@@._V1_FMjpg_UX600_.jpg", answer: "brad pitt" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMjI0MTg3MzI0M15BMl5BanBnXkFtZTcwMzQyODU2Mw@@._V1_FMjpg_UX600_.jpg", answer: "leonardo dicaprio" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTkxMzk4MjQ4MF5BMl5BanBnXkFtZTcwMzExODQxOA@@._V1_FMjpg_UX600_.jpg", answer: "robert downey jr" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTM3OTUwMDYwNl5BMl5BanBnXkFtZTcwNTUyNzc3Nw@@._V1_FMjpg_UX600_.jpg", answer: "johnny depp" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMjA1MjE2MTQ2MV5BMl5BanBnXkFtZTcwMjE5MDY0Nw@@._V1_FMjpg_UX600_.jpg", answer: "angelina jolie" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTU2NDQ3NDk0M15BMl5BanBnXkFtZTcwNDkxMjI1NA@@._V1_FMjpg_UX600_.jpg", answer: "will smith" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMjExOTY3NzExM15BMl5BanBnXkFtZTcwOTg0OTY4Mg@@._V1_FMjpg_UX600_.jpg", answer: "emma watson" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTM0ODU5Nzk2OV5BMl5BanBnXkFtZTcwMzI2ODgyNQ@@._V1_FMjpg_UX600_.jpg", answer: "dwayne johnson" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMjI4NjM1NDkyN15BMl5BanBnXkFtZTcwMjk0NjY5Ng@@._V1_FMjpg_UX600_.jpg", answer: "jennifer lawrence" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTczNTI2ODUwOF5BMl5BanBnXkFtZTcwMTU0NTIzMw@@._V1_FMjpg_UX600_.jpg", answer: "morgan freeman" },
-  { src: "https://m.media-amazon.com/images/M/MV5BODg3MzYwMjE4N15BMl5BanBnXkFtZTcwMjU5NzAzNw@@._V1_FMjpg_UX600_.jpg", answer: "scarlett johansson" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMjAwMzc5OTEzOF5BMl5BanBnXkFtZTgwMDc5ODU3MTE@._V1_FMjpg_UX600_.jpg", answer: "chris hemsworth" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTA2NTk0MjcyMTBeQTJeQWpwZ15BbWU3MDQ5NDAzNDc@._V1_FMjpg_UX600_.jpg", answer: "natalie portman" },
-  { src: "https://m.media-amazon.com/images/M/MV5BNDExMzIzNjk3Nl5BMl5BanBnXkFtZTcwOTE4NDc5OA@@._V1_FMjpg_UX600_.jpg", answer: "chris evans" },
-  { src: "https://m.media-amazon.com/images/M/MV5BMTQzMjkwNTQ2OF5BMl5BanBnXkFtZTgwNTQ4MTQ4MTE@._V1_FMjpg_UX600_.jpg", answer: "tom cruise" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/8/88/Brad_Pitt_2019_by_Glenn_Francis.jpg", answer: "brad pitt" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Leonardo_DiCaprio_Cannes_2019.jpg", answer: "leonardo dicaprio" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/2/26/Robert_Downey%2C_Jr._SDCC_2014_%28cropped%29.jpg", answer: "robert downey jr" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Johnny_Depp_Cannes_2023.jpg", answer: "johnny depp" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/9/90/Angelina_Jolie_C%C3%A9sar_2011_2.jpg", answer: "angelina jolie" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/2/23/Will_Smith_2019_by_Glenn_Francis.jpg", answer: "will smith" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/4/49/Emma_Watson_2013.jpg", answer: "emma watson" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Dwayne_Johnson_2013.jpg", answer: "dwayne johnson" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Jennifer_Lawrence_2016.jpg", answer: "jennifer lawrence" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/f/f6/Morgan_Freeman_Deauville_2018.jpg", answer: "morgan freeman" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/6/60/Scarlett_Johansson_by_Gage_Skidmore_2.jpg", answer: "scarlett johansson" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Chris_Hemsworth_by_Gage_Skidmore_2.jpg", answer: "chris hemsworth" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Natalie_Portman_Cannes_2015_5.jpg", answer: "natalie portman" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/9/90/Chris_Evans_2014_Comic_Con_%28cropped%29.jpg", answer: "chris evans" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/8/86/Tom_Cruise_by_Gage_Skidmore_2.jpg", answer: "tom cruise" },
 ];
 
 // Scan photos folder: filename (without extension) = answer

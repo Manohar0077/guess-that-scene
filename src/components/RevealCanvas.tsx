@@ -22,8 +22,12 @@ const RevealCanvas: React.FC<RevealCanvasProps> = ({
 
   useEffect(() => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Avoid forcing CORS for third-party URLs; many hosts block anonymous canvas requests
+    if (!/^https?:\/\//i.test(imageSrc)) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => setImage(img);
+    img.onerror = () => setImage(null);
     img.src = imageSrc;
   }, [imageSrc]);
 
