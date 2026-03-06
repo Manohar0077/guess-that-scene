@@ -8,23 +8,23 @@ const PHOTOS_DIR = path.join(process.cwd(), "public", "photos");
 const ROUND_DURATION_SECONDS = 60;
 const REVEAL_INTERVAL_MS = 3000;
 
-// Celebrity photos (online mode)
+// Celebrity photos (online mode) - using reliable image sources
 const CELEBRITY_PHOTOS = [
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Virat_Kohli_during_the_India_vs_Aus_4th_Test_match_at_Narendra_Modi_Stadium_on_09_March_2023.jpg/440px-Virat_Kohli_during_the_India_vs_Aus_4th_Test_match_at_Narendra_Modi_Stadium_on_09_March_2023.jpg", answer: "virat kohli" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg/440px-Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg", answer: "lionel messi" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/440px-Cristiano_Ronaldo_2018.jpg", answer: "cristiano ronaldo" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Shah_Rukh_Khan_graces_the_launch_of_the_new_TAG_Heuer_collection_%28cropped%29.jpg/440px-Shah_Rukh_Khan_graces_the_launch_of_the_new_TAG_Heuer_collection_%28cropped%29.jpg", answer: "shah rukh khan" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ed_Sheeran_2013.jpg/440px-Ed_Sheeran_2013.jpg", answer: "ed sheeran" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Neymar_Jr_2022.jpg/440px-Neymar_Jr_2022.jpg", answer: "neymar" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/440px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg", answer: "albert einstein" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Elon_Musk_Royal_Society_%28crop2%29.jpg/440px-Elon_Musk_Royal_Society_%28crop2%29.jpg", answer: "elon musk" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Sachin_Tendulkar_at_MRF_Pace_Foundation.jpg/440px-Sachin_Tendulkar_at_MRF_Pace_Foundation.jpg", answer: "sachin tendulkar" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Ariana_Grande_Grammys_Red_Carpet_2020.png/440px-Ariana_Grande_Grammys_Red_Carpet_2020.png", answer: "ariana grande" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Dwayne_Johnson_2%2C_2013.jpg/440px-Dwayne_Johnson_2%2C_2013.jpg", answer: "dwayne johnson" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Bill_Gates_2018.jpg/440px-Bill_Gates_2018.jpg", answer: "bill gates" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/LeBron_James_-_51959723161_%28cropped%29.jpg/440px-LeBron_James_-_51959723161_%28cropped%29.jpg", answer: "lebron james" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Brad_Pitt_2019_by_Glenn_Francis.jpg/440px-Brad_Pitt_2019_by_Glenn_Francis.jpg", answer: "brad pitt" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/MSDhoni09.jpg/440px-MSDhoni09.jpg", answer: "ms dhoni" },
+  { src: "https://m.media-amazon.com/images/M/MV5BNjk2OTUxMzM0MF5BMl5BanBnXkFtZTcwMTc0MDUyMw@@._V1_FMjpg_UX600_.jpg", answer: "brad pitt" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMjI0MTg3MzI0M15BMl5BanBnXkFtZTcwMzQyODU2Mw@@._V1_FMjpg_UX600_.jpg", answer: "leonardo dicaprio" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTkxMzk4MjQ4MF5BMl5BanBnXkFtZTcwMzExODQxOA@@._V1_FMjpg_UX600_.jpg", answer: "robert downey jr" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTM3OTUwMDYwNl5BMl5BanBnXkFtZTcwNTUyNzc3Nw@@._V1_FMjpg_UX600_.jpg", answer: "johnny depp" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMjA1MjE2MTQ2MV5BMl5BanBnXkFtZTcwMjE5MDY0Nw@@._V1_FMjpg_UX600_.jpg", answer: "angelina jolie" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTU2NDQ3NDk0M15BMl5BanBnXkFtZTcwNDkxMjI1NA@@._V1_FMjpg_UX600_.jpg", answer: "will smith" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMjExOTY3NzExM15BMl5BanBnXkFtZTcwOTg0OTY4Mg@@._V1_FMjpg_UX600_.jpg", answer: "emma watson" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTM0ODU5Nzk2OV5BMl5BanBnXkFtZTcwMzI2ODgyNQ@@._V1_FMjpg_UX600_.jpg", answer: "dwayne johnson" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMjI4NjM1NDkyN15BMl5BanBnXkFtZTcwMjk0NjY5Ng@@._V1_FMjpg_UX600_.jpg", answer: "jennifer lawrence" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTczNTI2ODUwOF5BMl5BanBnXkFtZTcwMTU0NTIzMw@@._V1_FMjpg_UX600_.jpg", answer: "morgan freeman" },
+  { src: "https://m.media-amazon.com/images/M/MV5BODg3MzYwMjE4N15BMl5BanBnXkFtZTcwMjU5NzAzNw@@._V1_FMjpg_UX600_.jpg", answer: "scarlett johansson" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMjAwMzc5OTEzOF5BMl5BanBnXkFtZTgwMDc5ODU3MTE@._V1_FMjpg_UX600_.jpg", answer: "chris hemsworth" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTA2NTk0MjcyMTBeQTJeQWpwZ15BbWU3MDQ5NDAzNDc@._V1_FMjpg_UX600_.jpg", answer: "natalie portman" },
+  { src: "https://m.media-amazon.com/images/M/MV5BNDExMzIzNjk3Nl5BMl5BanBnXkFtZTcwOTE4NDc5OA@@._V1_FMjpg_UX600_.jpg", answer: "chris evans" },
+  { src: "https://m.media-amazon.com/images/M/MV5BMTQzMjkwNTQ2OF5BMl5BanBnXkFtZTgwNTQ4MTQ4MTE@._V1_FMjpg_UX600_.jpg", answer: "tom cruise" },
 ];
 
 // Scan photos folder: filename (without extension) = answer
