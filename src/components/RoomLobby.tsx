@@ -76,7 +76,7 @@ const RoomLobby: React.FC<RoomLobbyProps> = ({ ws, onGameStart, initialRoomCode 
     setConnecting(true);
     try {
       await ws.connect(serverUrl);
-      ws.send({ type: "create_room", playerName: playerName.trim(), rounds, revealMode });
+      ws.send({ type: "create_room", playerName: playerName.trim(), rounds, revealMode, photoSource });
     } catch {
       setError("Could not connect to server. Is it running?");
     }

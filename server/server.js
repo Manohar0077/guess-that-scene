@@ -202,9 +202,10 @@ wss.on("connection", (ws) => {
 
     switch (msg.type) {
       case "create_room": {
-        const photos = loadPhotos();
+        const photoSource = msg.photoSource === "online" ? "online" : "custom";
+        const photos = loadPhotos(photoSource);
         if (photos.length === 0) {
-          ws.send(JSON.stringify({ type: "error", message: "No photos found in public/photos/ folder. Add images first!" }));
+          ws.send(JSON.stringify({ type: "error", message: photoSource === "custom" ? "No photos found in public/photos/ folder. Add images first!" : "No celebrity photos available." }));
           return;
         }
         const code = generateRoomCode();
